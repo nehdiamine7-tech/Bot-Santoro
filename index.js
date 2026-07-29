@@ -1,11 +1,15 @@
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 
 // ==========================================
-// CONFIGURATION - EDIT THESE VALUES
+// CONFIGURATION SECTION
 // ==========================================
-const WELCOME_CHANNEL_ID = '1520141030995791912';
-const WELCOME_GIF_URL = 'https://media1.tenor.com/m/ZcQz_Bymg5cAAAAC/welcome.gif'; // <--- CHANGE THIS
-const WELCOME_MESSAGE = '**Welcome To The Family Santoro** {user}**!** **We Are now** **__{memberCount}__** **Members**.';
+const CONFIG = {
+    WELCOME_CHANNEL_ID: '1520141030995791912',
+    GOODBYE_CHANNEL_ID: '1531965467323924610',
+    WELCOME_GIF_URL: 'https://media1.tenor.com/m/ZcQz_Bymg5cAAAAC/welcome.gif',
+    WELCOME_MESSAGE: '**Welcome To The Family Santoro** {user}**!** **We Are Now** **__{memberCount}__** **Members**.',
+    GOODBYE_MESSAGE: '{user} has left the server. We are now {memberCount} members.'
+};
 
 // ==========================================
 // BOT INITIALIZATION
@@ -20,6 +24,9 @@ const client = new Client({
     ]
 });
 
+// ==========================================
+// READY EVENT
+// ==========================================
 client.on('ready', () => {
     console.log(`Bot is online: ${client.user.tag}`);
     console.log(`Serving ${client.guilds.cache.size} servers`);
@@ -29,14 +36,14 @@ client.on('ready', () => {
 // WELCOME SYSTEM (With GIF)
 // ==========================================
 client.on('guildMemberAdd', async (member) => {
-    const channel = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
+    const channel = member.guild.channels.cache.get(CONFIG.WELCOME_CHANNEL_ID);
     if (!channel) {
-        console.error(`Welcome channel ${WELCOME_CHANNEL_ID} not found.`);
+        console.error(`Welcome channel ${CONFIG.WELCOME_CHANNEL_ID} not found.`);
         return;
     }
 
     try {
-        const welcomeText = WELCOME_MESSAGE
+        const welcomeText = CONFIG.WELCOME_MESSAGE
             .replace(/{user}/g, `<@${member.id}>`)
             .replace(/{memberCount}/g, member.guild.memberCount);
 
@@ -44,7 +51,7 @@ client.on('guildMemberAdd', async (member) => {
             .setColor(0x00ff00)
             .setTitle('👋 Welcome!')
             .setDescription(welcomeText)
-            .setImage(WELCOME_GIF_URL)
+            .setImage(CONFIG.WELCOME_GIF_URL)
             .setFooter({ text: `Member #${member.guild.memberCount}` })
             .setTimestamp();
 
@@ -58,14 +65,14 @@ client.on('guildMemberAdd', async (member) => {
 // GOODBYE SYSTEM
 // ==========================================
 client.on('guildMemberRemove', async (member) => {
-    const channel = member.guild.channels.cache.get(GOODBYE_CHANNEL_ID);
+    const channel = member.guild.channels.cache.get(CONFIG.GOODBYE_CHANNEL_ID);
     if (!channel) {
-        console.error(`Goodbye channel ${GOODBYE_CHANNEL_ID} not found.`);
+        console.error(`Goodbye channel ${CONFIG.GOODBYE_CHANNEL_ID} not found.`);
         return;
     }
 
     try {
-        const goodbyeText = GOODBYE_MESSAGE
+        const goodbyeText = CONFIG.GOODBYE_MESSAGE
             .replace(/{user}/g, member.user.tag)
             .replace(/{memberCount}/g, member.guild.memberCount);
 
@@ -84,22 +91,36 @@ client.on('guildMemberRemove', async (member) => {
 });
 
 // ==========================================
-// ALL COMMANDS
+// MESSAGE COMMANDS
 // ==========================================
 client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
 
+    // --------------------------------
+    // AUTO RESPONDER (WITH RETURN)
+    // --------------------------------
+    if (message.content.toLowerCase().includes('tag')) {
+        await message.reply('『ꜱɴᴛʀ』');
+        return; // Stops here, so no other commands will run for this message
+    }
+
+    // --------------------------------
     // 1. !hello
+    // --------------------------------
     if (message.content === '!hello') {
         await message.reply(`Hello ${message.author.username}!`);
     }
 
+    // --------------------------------
     // 2. !ping
+    // --------------------------------
     if (message.content === '!ping') {
         await message.reply(`Pong! ${Date.now() - message.createdTimestamp}ms`);
     }
 
-    // 3. !server (UPDATED)
+    // --------------------------------
+    // 3. !server (with Santoro Never Die)
+    // --------------------------------
     if (message.content === '!server') {
         const guild = message.guild;
         const owner = guild.members.cache.get(guild.ownerId);
@@ -127,7 +148,9 @@ client.on('messageCreate', async (message) => {
         await message.reply({ embeds: [embed] });
     }
 
+    // --------------------------------
     // 4. !commands
+    // --------------------------------
     if (message.content === '!commands') {
         await message.reply(
             'Commands:\n' +
@@ -140,11 +163,14 @@ client.on('messageCreate', async (message) => {
             '!giverole @user @role\n' +
             '!giveroleall @role\n' +
             '!invites\n\n' +
-            '**Auto Systems:** Welcome (with GIF) & Goodbye messages are active.'
+            '**Auto Systems:** Welcome (with GIF) & Goodbye messages are active.\n' +
+            '**Auto Responder:** Sending "tag" replies with 『ꜱɴᴛʀ』'
         );
     }
 
+    // --------------------------------
     // 5. !kick
+    // --------------------------------
     if (message.content.startsWith('!kick')) {
         if (!message.member.permissions.has('KickMembers')) {
             return message.reply('You need KickMembers permission.');
@@ -160,7 +186,9 @@ client.on('messageCreate', async (message) => {
         await message.reply(`✅ ${user.tag} kicked. Reason: ${reason}`);
     }
 
+    // --------------------------------
     // 6. !ban
+    // --------------------------------
     if (message.content.startsWith('!ban')) {
         if (!message.member.permissions.has('BanMembers')) {
             return message.reply('You need BanMembers permission.');
@@ -176,7 +204,9 @@ client.on('messageCreate', async (message) => {
         await message.reply(`✅ ${user.tag} banned. Reason: ${reason}`);
     }
 
+    // --------------------------------
     // 7. !timeout
+    // --------------------------------
     if (message.content.startsWith('!timeout')) {
         if (!message.member.permissions.has('ModerateMembers')) {
             return message.reply('You need ModerateMembers permission.');
@@ -198,7 +228,9 @@ client.on('messageCreate', async (message) => {
         await message.reply(`✅ ${user.tag} timed out for ${minutes} minutes. Reason: ${reason}`);
     }
 
+    // --------------------------------
     // 8. !clear
+    // --------------------------------
     if (message.content.startsWith('!clear')) {
         if (!message.member.permissions.has('ManageMessages')) {
             return message.reply('You need ManageMessages permission.');
@@ -221,7 +253,9 @@ client.on('messageCreate', async (message) => {
         }
     }
 
+    // --------------------------------
     // 9. !announce
+    // --------------------------------
     if (message.content.startsWith('!announce')) {
         if (!message.member.permissions.has('ManageMessages')) {
             return message.reply('You need ManageMessages permission.');
@@ -288,7 +322,9 @@ client.on('messageCreate', async (message) => {
         });
     }
 
-    // 10. !giverole
+    // --------------------------------
+    // 10. !giverole (Single user)
+    // --------------------------------
     if (message.content.startsWith('!giverole')) {
         if (!message.member.permissions.has('ManageRoles')) {
             return message.reply('You need ManageRoles permission.');
@@ -322,44 +358,49 @@ client.on('messageCreate', async (message) => {
         }
     }
 
-// 11. !giveroleall (Simple version)
-if (message.content.startsWith('!giveroleall')) {
-    if (!message.member.permissions.has('Administrator')) {
-        return message.reply('You need Administrator permission.');
-    }
-
-    const args = message.content.split(' ');
-    const roleMention = args[1];
-    if (!roleMention) return message.reply('Usage: !giveroleall @role');
-
-    const role = message.mentions.roles.first();
-    if (!role) return message.reply('Invalid role. Mention a valid role.');
-
-    if (!message.guild.members.me.permissions.has('ManageRoles')) {
-        return message.reply('Bot lacks ManageRoles permission.');
-    }
-    if (role.position >= message.guild.members.me.roles.highest.position) {
-        return message.reply('Bot role is lower than that role. Cannot assign.');
-    }
-
-    const members = message.guild.members.cache.filter(m => !m.user.bot && !m.roles.cache.has(role.id));
-    if (members.size === 0) return message.reply('Everyone already has that role.');
-
-    await message.reply(`⏳ Adding role to ${members.size} members...`);
-
-    let count = 0;
-    for (const [id, member] of members) {
-        try {
-            await member.roles.add(role);
-            count++;
-        } catch (err) {
-            console.error(`Failed for ${member.user.tag}: ${err}`);
+    // --------------------------------
+    // 11. !giveroleall (Simple version)
+    // --------------------------------
+    if (message.content.startsWith('!giveroleall')) {
+        if (!message.member.permissions.has('Administrator')) {
+            return message.reply('You need Administrator permission.');
         }
+
+        const args = message.content.split(' ');
+        const roleMention = args[1];
+        if (!roleMention) return message.reply('Usage: !giveroleall @role');
+
+        const role = message.mentions.roles.first();
+        if (!role) return message.reply('Invalid role. Mention a valid role.');
+
+        if (!message.guild.members.me.permissions.has('ManageRoles')) {
+            return message.reply('Bot lacks ManageRoles permission.');
+        }
+        if (role.position >= message.guild.members.me.roles.highest.position) {
+            return message.reply('Bot role is lower than that role. Cannot assign.');
+        }
+
+        const members = message.guild.members.cache.filter(m => !m.user.bot && !m.roles.cache.has(role.id));
+        if (members.size === 0) return message.reply('Everyone already has that role.');
+
+        await message.reply(`⏳ Adding role to ${members.size} members...`);
+
+        let count = 0;
+        for (const [id, member] of members) {
+            try {
+                await member.roles.add(role);
+                count++;
+            } catch (err) {
+                console.error(`Failed for ${member.user.tag}: ${err}`);
+            }
+        }
+
+        await message.channel.send(`✅ Done! Added role to ${count} members.`);
     }
 
-    await message.channel.send(`✅ Done! Added role to ${count} members.`);
-}
-    // 12. !invites (FIXED)
+    // --------------------------------
+    // 12. !invites
+    // --------------------------------
     if (message.content === '!invites') {
         if (!message.guild.members.me.permissions.has('ManageGuild')) {
             return message.reply('Bot needs ManageGuild permission to view invites.');
