@@ -322,42 +322,43 @@ client.on('messageCreate', async (message) => {
         }
     }
 
-    // 11. !giveroleall (FIXED)
-    if (message.content.startsWith('!giveroleall')) {
-        if (!message.member.permissions.has('Administrator')) {
-            return message.reply('You need Administrator permission for this command.');
-        }
-        const args = message.content.split(' ');
-        const roleMention = args[1];
-        if (!roleMention) return message.reply('Usage: !giveroleall @role');
-        const role = message.mentions.roles.first();
-        if (!role) return message.reply('Invalid role.');
-        if (!message.guild.members.me.permissions.has('ManageRoles')) {
-            return message.reply('Bot lacks ManageRoles permission.');
-        }
-        if (role.position >= message.guild.members.me.roles.highest.position) {
-            return message.reply('Bot role is lower than that role. Cannot assign.');
-        }
-
-        const members = message.guild.members.cache.filter(m => !m.user.bot && !m.roles.cache.has(role.id));
-        if (members.size === 0) {
-            return message.reply('Everyone already has that role, or no members found.');
-        }
-
-        await message.reply(`⏳ Assigning role to ${members.size} members... This may take a moment.`);
-
-        let count = 0;
-        for (const [id, member] of members) {
-            try {
-                await member.roles.add(role);
-                count++;
-            } catch (err) {
-                console.error(`Failed for ${id}: ${err}`);
-            }
-        }
-        await message.channel.send(`✅ Assigned ${role.name} to ${count} members.`);
+// 11. !giveroleall (Simple version)
+if (message.content.startsWith('!giveroleall')) {
+    if (!message.member.permissions.has('Administrator')) {
+        return message.reply('You need Administrator permission.');
     }
 
+    const args = message.content.split(' ');
+    const roleMention = args[1];
+    if (!roleMention) return message.reply('Usage: !giveroleall @role');
+
+    const role = message.mentions.roles.first();
+    if (!role) return message.reply('Invalid role. Mention a valid role.');
+
+    if (!message.guild.members.me.permissions.has('ManageRoles')) {
+        return message.reply('Bot lacks ManageRoles permission.');
+    }
+    if (role.position >= message.guild.members.me.roles.highest.position) {
+        return message.reply('Bot role is lower than that role. Cannot assign.');
+    }
+
+    const members = message.guild.members.cache.filter(m => !m.user.bot && !m.roles.cache.has(role.id));
+    if (members.size === 0) return message.reply('Everyone already has that role.');
+
+    await message.reply(`⏳ Adding role to ${members.size} members...`);
+
+    let count = 0;
+    for (const [id, member] of members) {
+        try {
+            await member.roles.add(role);
+            count++;
+        } catch (err) {
+            console.error(`Failed for ${member.user.tag}: ${err}`);
+        }
+    }
+
+    await message.channel.send(`✅ Done! Added role to ${count} members.`);
+}
     // 12. !invites (FIXED)
     if (message.content === '!invites') {
         if (!message.guild.members.me.permissions.has('ManageGuild')) {
